@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Filmstrip Maker</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0e0f12">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <style>
+        :root {
+            --bg: #0e0f12;
+            --panel: #16181d;
+            --panel-2: #1d2027;
+            --border: #2a2e37;
+            --text: #e6e8ee;
+            --muted: #8a909e;
+            --accent: #e6df9c;
+            --accent-2: #e6df9c;
+            --ok: #3ddc97;
+            --err: #ff6b6b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(1200px 600px at 20% -10%, #1f1d12 0%, var(--bg) 60%);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 920px;
+            display: grid;
+            gap: 16px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: .2px;
+        }
+
+        header p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .drop {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 36px 16px;
+            text-align: center;
+            color: var(--muted);
+            transition: .15s;
+            cursor: pointer;
+            background: var(--panel-2);
+        }
+
+        .drop.over {
+            border-color: var(--accent);
+            color: var(--text);
+            background: #26240f;
+        }
+
+        .drop strong {
+            color: var(--text);
+            display: block;
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button,
+        .btn {
+            background: var(--panel-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        button:hover {
+            border-color: var(--accent);
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border: none;
+            font-weight: 600;
+            color: #1a1808;
+        }
+
+        button.primary:hover {
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            filter: none;
+        }
+
+        input[type=text],
+        input[type=number] {
+            background: var(--panel-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 14px;
+            min-width: 0;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        label {
+            font-size: 12px;
+            color: var(--muted);
+            display: grid;
+            gap: 6px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .stat b {
+            display: block;
+            font-size: 18px;
+        }
+
+        .stat span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .thumbs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+            gap: 8px;
+            max-height: 220px;
+            overflow: auto;
+            margin-top: 14px;
+        }
+
+        .thumbs div {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: repeating-conic-gradient(#222 0% 25%, #1a1a1a 0% 50%) 50% / 12px 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thumbs img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .thumbs small {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 10px;
+            color: #fff;
+            text-shadow: 0 0 3px #000;
+        }
+
+        .msg {
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        .msg.err {
+            color: var(--err);
+        }
+
+        .msg.ok {
+            color: var(--ok);
+        }
+
+        .preview-wrap {
+            max-height: 480px;
+            overflow: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: repeating-conic-gradient(#222 0% 25%, #1a1a1a 0% 50%) 50% / 16px 16px;
+            text-align: center;
+        }
+
+        .preview-wrap canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .hise {
+            font-family: ui-monospace, Consolas, monospace;
+            color: var(--accent-2);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <h1>Filmstrip Generator</h1>
+            <p>Assemble tes images en un filmstrip vertical pour HISE.</p>
+        </header>
+
+        <section class="card">
+            <div class="drop" id="drop">
+                <strong>Glisse tes images (ou ton dossier) ici</strong>
+                ou clique pour choisir les fichiers
+            </div>
+            <input type="file" id="files" accept="image/*" multiple class="hidden">
+            <input type="file" id="folder" webkitdirectory class="hidden">
+            <div class="row" style="margin-top:12px">
+                <button id="pickFiles">Choisir des images</button>
+                <button id="pickFolder">Choisir un dossier</button>
+                <button id="clear">Vider</button>
+            </div>
+            <div class="thumbs" id="thumbs"></div>
+        </section>
+
+        <section class="card">
+            <div class="stats" id="stats">
+                <div class="stat"><b id="sCount">0</b><span>images</span></div>
+                <div class="stat"><b id="sSize">–</b><span>taille d'une image</span></div>
+                <div class="stat"><b id="sOut">–</b><span>taille du filmstrip</span></div>
+            </div>
+            <div class="row" style="margin-top:16px; align-items:flex-end">
+                <label style="flex:1; min-width:200px">Nom du fichier de sortie
+                    <input type="text" id="outName" value="filmstrip.png">
+                </label>
+                <button class="primary" id="generate" disabled>Générer le filmstrip</button>
+                <button id="download" disabled>Télécharger</button>
+            </div>
+            <p class="msg" id="msg"></p>
+        </section>
+
+        <section class="card hidden" id="resultCard">
+            <div class="row" style="justify-content:space-between; margin-bottom:12px">
+                <span>Dans HISE : <span class="hise" id="hiseInfo"></span></span>
+            </div>
+            <div class="preview-wrap"><canvas id="preview"></canvas></div>
+        </section>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const drop = $('drop'), filesInput = $('files'), folderInput = $('folder');
+        const msg = $('msg');
+        let frames = [];   // {name, bitmap, url}
+        let blob = null;
+        const MAX_H = 32767, MAX_AREA = 268435456; // limites des navigateurs
+
+        const setMsg = (t, c = '') => { msg.textContent = t; msg.className = 'msg ' + c; };
+
+        async function addFiles(list) {
+            const imgs = [...list].filter(f => f.type.startsWith('image/'));
+            if (!imgs.length) return setMsg('Aucune image trouvée.', 'err');
+            for (const f of imgs) {
+                try {
+                    const bitmap = await createImageBitmap(f);
+                    frames.push({ name: f.name, bitmap, url: URL.createObjectURL(f) });
+                } catch { setMsg('Impossible de lire ' + f.name, 'err'); }
+            }
+            frames.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+            blob = null; $('download').disabled = true;
+            refresh();
+        }
+
+        function refresh() {
+            const t = $('thumbs'); t.innerHTML = '';
+            frames.forEach((f, i) => {
+                const d = document.createElement('div');
+                d.title = f.name;
+                d.innerHTML = `<img src="${f.url}"><small>${i}</small>`;
+                t.appendChild(d);
+            });
+            $('sCount').textContent = frames.length;
+            $('generate').disabled = !frames.length;
+            if (frames.length) {
+                const w = frames[0].bitmap.width, h = frames[0].bitmap.height;
+                $('sSize').textContent = `${w}×${h}`;
+                $('sOut').textContent = `${w}×${h * frames.length}`;
+                if (h * frames.length > MAX_H || w * h * frames.length > MAX_AREA)
+                    setMsg('Attention : le filmstrip dépasse la limite du navigateur. Exporte tes images plus petites (SCALE plus bas).', 'err');
+                else setMsg('');
+            } else { $('sSize').textContent = $('sOut').textContent = '–'; }
+        }
+
+        $('generate').onclick = () => {
+            const w = frames[0].bitmap.width, h = frames[0].bitmap.height;
+            if (frames.some(f => f.bitmap.width !== w || f.bitmap.height !== h))
+                return setMsg('Toutes les images doivent avoir la même taille.', 'err');
+            if (h * frames.length > MAX_H || w * h * frames.length > MAX_AREA)
+                return setMsg('Filmstrip trop grand pour le navigateur.', 'err');
+            const c = $('preview');
+            c.width = w; c.height = h * frames.length;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+            frames.forEach((f, i) => ctx.drawImage(f.bitmap, 0, i * h));
+            c.toBlob(b => {
+                blob = b;
+                $('download').disabled = false;
+                $('resultCard').classList.remove('hidden');
+                $('hiseInfo').textContent = `numStrips = ${frames.length}`;
+                setMsg(`${frames.length} images de ${w}×${h} → ${w}×${h * frames.length}`, 'ok');
+            }, 'image/png');
+        };
+
+        $('download').onclick = () => {
+            if (!blob) return;
+            let name = $('outName').value.trim() || 'filmstrip.png';
+            if (!/\.png$/i.test(name)) name += '.png';
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = name; a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        };
+
+        $('clear').onclick = () => {
+            frames.forEach(f => URL.revokeObjectURL(f.url));
+            frames = []; blob = null; $('download').disabled = true;
+            $('resultCard').classList.add('hidden'); refresh(); setMsg('');
+        };
+
+        drop.onclick = $('pickFiles').onclick = () => filesInput.click();
+        $('pickFolder').onclick = () => folderInput.click();
+        filesInput.onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+        folderInput.onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+
+        ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+        ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+        drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+        window.addEventListener('dragover', e => e.preventDefault());
+        window.addEventListener('drop', e => e.preventDefault());
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+    </script>
+</body>
+
+</html>
